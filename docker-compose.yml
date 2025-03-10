@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: laravel_db
+    environment:
+      POSTGRES_DB: laravel
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - laravel
+
+  redis:
+    image: redis:alpine
+    container_name: laravel_redis
+    ports:
+      - 6379:6379
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  postgres_data:
