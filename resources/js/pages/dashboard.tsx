@@ -1,8 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Chess } from 'chess.js';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Square } from 'react-chessboard/dist/chessboard/types';
 
@@ -13,43 +13,28 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type MoveForm = {
-    fen: string;
-    color: string;
-};
-
-type DashboardProps = {
-    fen?: string;
-    message?: string;
-};
-
-export default function Dashboard({ fen, message }: DashboardProps) {
+export default function Dashboard() {
     const chessboardWrapperRef = useRef<HTMLDivElement | null>(null);
     const [game] = useState<Chess>(new Chess());
+    const [fen, setFen] = useState('');
 
     const [status, setStatus] = useState<string | undefined>(undefined);
 
-    const { data, setData, post, processing, errors, reset, transform } = useForm<Required<MoveForm>>({
-        fen: '',
-        color: '',
-    });
+    const handlePost = useCallback(async (fen: string) => {
+        const response = await fetch('/api/move', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fen: fen ?? '', color: 'black' }),
+        });
+        const data = await response.json();
 
-    const handlePost = useCallback(
-        (fen: string) => {
-            transform((form) => {
-                form.fen = fen ?? '';
-                form.color = 'black';
+        const { fen: newFen, message } = data;
+        setFen(newFen);
 
-                return form;
-            });
-
-            post(route('chess.move'), {
-                onSuccess: (result) => console.log(result),
-                onFinish: (result) => console.log(result),
-            });
-        },
-        [post, transform],
-    );
+        updateGame(newFen, message);
+    }, []);
 
     const updateStatus = useCallback(() => {
         let status = '';
@@ -87,36 +72,38 @@ export default function Dashboard({ fen, message }: DashboardProps) {
         }
     }, [game, handlePost]);
 
-    useEffect(() => {
-        if (fen && fen !== game.fen()) {
-            game.load(fen);
-        }
-        if (message) {
-            const response = JSON.parse(message);
-            const requestedMove = response.candidates?.[0]?.content?.parts?.[0]?.text;
-            const moveSquares = requestedMove.trim().split('-');
-            if (moveSquares.length !== 2) {
-                console.error('Failed parsing response');
-                return;
+    const updateGame = useCallback(
+        (fen: string, message: any) => {
+            if (fen && fen !== game.fen()) {
+                game.load(fen);
             }
-
-            try {
-                const move = game.move({
-                    from: moveSquares[0],
-                    to: moveSquares[1],
-                    promotion: 'q',
-                });
-
-                if (!move) {
-                    console.error('Gemini tried an invalid move!');
+            if (message) {
+                const requestedMove = message.candidates?.[0]?.content?.parts?.[0]?.text;
+                const moveSquares = requestedMove.trim().split('-');
+                if (moveSquares.length !== 2) {
+                    console.error('Failed parsing response');
                     return;
                 }
-                updateStatus();
-            } catch (e) {
-                console.error('Failed making move', e);
+
+                try {
+                    const move = game.move({
+                        from: moveSquares[0],
+                        to: moveSquares[1],
+                        promotion: 'q',
+                    });
+
+                    if (!move) {
+                        console.error('Gemini tried an invalid move!');
+                        return;
+                    }
+                    updateStatus();
+                } catch (e) {
+                    console.error('Failed making move', e);
+                }
             }
-        }
-    }, [game, fen, message, updateStatus]);
+        },
+        [game, updateStatus],
+    );
 
     function onDrop(sourceSquare: Square, targetSquare: Square) {
         const move = game.move({
