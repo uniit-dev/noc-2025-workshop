@@ -4,27 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ChessMoveRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Log;
 
 class ChessController extends Controller
 {
-
     /**
      * Make a chess move.
      */
-    public function move(ChessMoveRequest $request): Response
+    public function move(ChessMoveRequest $request)
     {
-        $request->user()->fill($request->validated());
-        
-        $apiKey = 'AIzaSyAfOiH0yB068n2QX4HsJecsCmAuZfOa7rc';
+        $apiKey = config('app.gemini_api_key');
+
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey";
 
-        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ". Please make a move for " . $request->color . " pieces. try to win as hard as you can. Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'. If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else.";
+        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ". Please make a move for " . $request->color . " pieces. try to win as hard as you can. Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'. If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else. The valid moves are only [a-h][1-8][a-h][1-8]";
 
         $data = [
             "contents" => [
@@ -36,44 +31,41 @@ class ChessController extends Controller
             ]
         ];
 
-        $jsonData = json_encode($data);
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post($url, $data);
 
-        $ch = curl_init($url);
+            Log::info($response);
+            if ($response->successful()) {
+                $responseData = json_decode($response, true);
 
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($jsonData)
-        ]);
+                $payload = [
+                        'fen' => $request->fen,
+                        'color' => $request->color,
+                        'message' => $responseData,
+                        'status' => 'success'
+                    ];
 
-        $response = curl_exec($ch);
+                return response()->json($payload);
+            }
 
-        if (curl_errno($ch)) {
-            $error_msg = curl_error($ch);
-            curl_close($ch);
-            return response()->json(['error' => $error_msg], 500);
+            return response()->json([
+                'fen' => '',
+                'color' => '',
+                'message' => $response->body(),
+                'status' => $response->status(),
+            ], $response->status());
+
+        } catch (RequestException $e) {
+            return response()->json([
+                'fen' => '',
+                'color' => '',
+                'message' => $e->getMessage(),
+                'status' => $response->status(),
+            ], 500);
         }
 
-        curl_close($ch);
 
-        $responseData = json_decode($response, true);
-
-        // $data = [
-        //     'fen' => $request->fen,
-        //     'color' => $request->color,
-        //     'user_email' => $request->user()->email,
-        //     'message' => 'Hello from Laravel API!',
-        //     'status' => 'success'
-        // ];
-
-        return Inertia::render('dashboard', [
-            'fen' => $request->fen,
-            'color' => $request->color,
-            'user_email' => $request->user()->email,
-            'message' => json_encode($responseData),
-            'status' => 'success'
-        ]);
     }
 }
