@@ -20,22 +20,6 @@ export default function Dashboard() {
 
     const [status, setStatus] = useState<string | undefined>(undefined);
 
-    const handlePost = useCallback(async (fen: string) => {
-        const response = await fetch('/api/move', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ fen: fen ?? '', color: 'black' }),
-        });
-        const data = await response.json();
-
-        const { fen: newFen, message } = data;
-        setFen(newFen);
-
-        updateGame(newFen, message);
-    }, []);
-
     const updateStatus = useCallback(() => {
         let status = '';
 
@@ -65,20 +49,14 @@ export default function Dashboard() {
         }
 
         setStatus(status);
-
-        if (moveColor === 'Black') {
-            const fen = game.fen();
-            handlePost(fen);
-        }
-    }, [game, handlePost]);
+    }, [game]);
 
     const updateGame = useCallback(
-        (fen: string, message: any) => {
+        (fen: string, requestedMove: string) => {
             if (fen && fen !== game.fen()) {
                 game.load(fen);
             }
-            if (message) {
-                const requestedMove = message.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (requestedMove) {
                 const moveSquares = requestedMove.trim().split('-');
                 if (moveSquares.length !== 2) {
                     console.error('Failed parsing response');
@@ -105,7 +83,7 @@ export default function Dashboard() {
         [game, updateStatus],
     );
 
-    function onDrop(sourceSquare: Square, targetSquare: Square) {
+    const onDrop = (sourceSquare: Square, targetSquare: Square) => {
         const move = game.move({
             from: sourceSquare,
             to: targetSquare,
@@ -115,9 +93,32 @@ export default function Dashboard() {
         // illegal move
         if (move === null) return false;
 
+        if (game.turn() === 'b') {
+            const fen = game.fen();
+            handlePost(fen);
+        }
+
         updateStatus();
         return true;
     }
+
+    const handlePost = useCallback(async (fen: string) => {
+        const response = await fetch('/api/move', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fen: fen ?? '', color: 'black' }),
+        });
+        const data = await response.json();
+
+        const { fen: newFen, message } = data;
+        const requestedMove = message.candidates?.[0]?.content?.parts?.[0]?.text;
+        setFen(newFen);
+
+        updateGame(newFen, requestedMove);
+    }, [updateGame]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />

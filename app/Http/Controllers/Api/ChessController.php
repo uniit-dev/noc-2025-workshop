@@ -19,7 +19,7 @@ class ChessController extends Controller
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey";
 
-        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ". Please make a move for " . $request->color . " pieces. try to win as hard as you can. Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'. If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else.";
+        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ". Please make a move for " . $request->color . " pieces. try to win as hard as you can. Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'. If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else. The valid moves are only [a-h][1-8][a-h][1-8]";
 
         $data = [
             "contents" => [
