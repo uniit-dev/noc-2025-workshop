@@ -19,7 +19,12 @@ class ChessController extends Controller
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey";
 
-        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ". Please make a move for " . $request->color . " pieces. try to win as hard as you can. Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'. If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else. The valid moves are only [a-h][1-8][a-h][1-8]";
+        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ". 
+                    Please make a move for " . $request->color . " pieces. 
+                    Try to win as hard as you can. 
+                    Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'. 
+                    If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else. 
+                    The valid moves are only [a-h][1-8][a-h][1-8], so a1-a2 etc, Nb8 and such are not valid moves";
 
         $data = [
             "contents" => [
@@ -28,7 +33,7 @@ class ChessController extends Controller
                         ["text" => $prompt]
                     ]
                 ]
-            ]
+            ],
         ];
 
         try {
@@ -36,14 +41,12 @@ class ChessController extends Controller
                 'Content-Type' => 'application/json',
             ])->post($url, $data);
 
-            Log::info($response);
             if ($response->successful()) {
                 $responseData = json_decode($response, true);
 
+                Log::info($responseData);
                 $payload = [
-                        'fen' => $request->fen,
-                        'color' => $request->color,
-                        'message' => $responseData,
+                        'requestedMove' => $responseData['candidates'][0]['content']['parts'][0]['text'],
                         'status' => 'success'
                     ];
 
@@ -51,17 +54,13 @@ class ChessController extends Controller
             }
 
             return response()->json([
-                'fen' => '',
-                'color' => '',
-                'message' => $response->body(),
+                'requestedMove' => '',
                 'status' => $response->status(),
             ], $response->status());
 
         } catch (RequestException $e) {
             return response()->json([
-                'fen' => '',
-                'color' => '',
-                'message' => $e->getMessage(),
+                'requestedMove' => '',
                 'status' => $response->status(),
             ], 500);
         }
