@@ -100,3 +100,4 @@ composer run dev
 
 Happy coding! 🚀
 
+MY TOKEN: `AIzaSyBsBphFmV6P5_JdvqAUZEyuHAQwmzb4daQ`
