@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ChessMoveRequest;
+use App\Models\History;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class ChessController extends Controller
@@ -15,15 +17,16 @@ class ChessController extends Controller
      */
     public function move(ChessMoveRequest $request)
     {
+        Log::info($request);
         $apiKey = config('app.gemini_api_key');
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey";
 
-        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ". 
-                    Please make a move for " . $request->color . " pieces. 
-                    Try to win as hard as you can. 
-                    Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'. 
-                    If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else. 
+        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ".
+                    Please make a move for " . $request->color . " pieces.
+                    Try to win as hard as you can.
+                    Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'.
+                    If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else.
                     The valid moves are only [a-h][1-8][a-h][1-8], so a1-a2 etc, Nb8 and such are not valid moves";
 
         $data = [
@@ -45,6 +48,13 @@ class ChessController extends Controller
                 $responseData = json_decode($response, true);
 
                 Log::info($responseData);
+                History::create([
+                    'game_id' => $request->game_id,
+                    'user_id' => Auth::id(),
+                    'fen' => $request->fen,
+                    'order' => $request->turn,
+                ]);
+
                 $payload = [
                         'requestedMove' => $responseData['candidates'][0]['content']['parts'][0]['text'],
                         'status' => 'success'
@@ -66,5 +76,17 @@ class ChessController extends Controller
         }
 
 
+    }
+
+    public function record(ChessMoveRequest $request)
+    {
+        History::create([
+            'game_id' => $request->game_id,
+            'user_id' => Auth::id(),
+            'fen' => $request->fen,
+            'order' => $request->turn,
+        ]);
+
+        return response()->json(['message' => 'Record saved', 200]);
     }
 }

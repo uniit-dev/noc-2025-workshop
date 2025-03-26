@@ -16,6 +16,8 @@ class ChessMoveRequest extends FormRequest
         return [
             'fen' => ['required', 'string', 'max:255'],
             'color' => ['required', 'string', 'max:255'],
+            'game_id' => ['required', 'string', 'max:255'],
+            'turn' => ['required', 'integer'],
         ];
     }
 }
