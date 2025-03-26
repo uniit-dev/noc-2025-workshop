@@ -46,16 +46,22 @@ class ChessController extends Controller
                 ->post($url, $data);
 
             // STEP 5: Check if the request was successful and return the response
-            // if (success) {
+            if ($response->successful()) {
+                $responseData = json_decode($response->body());
+                $move = $responseData['canditates'][0]['content']['parts'][0]['text'];
 
-            //    return response;
-            //}
+                $payload = [
+                    'requestedMove' => $move,
+                    'status' => 'success'
+                ];
+               return response()->json($payload);
+            }
 
-            return // no success;
+            return response()->json(['message' => 'Failed to get move', 'status' => 'fail'], 500);
 
         } catch (RequestException $e) {
             // STEP 6: Handle errors
-            return // 500;
+            return response()->json(['message' => 'Failed to get move', 'status' => 'fail'], 500);
         }
 
 
