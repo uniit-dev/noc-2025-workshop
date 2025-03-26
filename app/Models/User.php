@@ -48,9 +48,8 @@ class User extends Authenticatable
         ];
     }
 
-
-    public function gameHistory(): HasMany
-    {
-        return $this->hasMany(History::class);
-    }
+    /** BONUS
+     * Implement has-many relation with History
+     */
+    public function gameHistory() {}
 }

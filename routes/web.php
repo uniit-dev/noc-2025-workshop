@@ -16,12 +16,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'game_id' => Str::uuid(),
         ]);
     })->name('dashboard');
-    Route::get('replay', function () {
-        return Inertia::render('replay/Replay', ['replays' => User::with('gameHistory')->find(Auth::id())->gameHistory->reduce(function ($carry, $item) {
-            $carry[$item->game_id][] = $item;
-            return $carry;
-        }, [])]);
-    })->name('replay');
+    // BONUS: Add a route so that '/replay' points to the Replay.tsx page component.
+    // return Inertia::render(<component-name>, ['replays' => User::with('gameHistory')->find(Auth::id())->gameHistory->reduce(function ($carry, $item) {
+    //     $carry[$item->game_id][] = $item;
+    //     return $carry;
+    // }, [])]);
 });
 
 require __DIR__.'/settings.php';

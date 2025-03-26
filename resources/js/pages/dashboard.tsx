@@ -82,12 +82,10 @@ export default function Dashboard({ game_id }: { game_id: string }) {
 
                 const newFen = updateStatus();
 
-                await axios.post('/api/record-move', {
-                    fen: newFen,
-                    color: 'black',
-                    game_id,
-                    turn: turn + 1,
-                });
+                // BONUS: Make a request to the '/api/record-move' endpoint
+                // await axios.post('', {
+                //    ...
+                // });
             } catch (e) {
                 console.error('Failed moving AI piece', e);
                 return false;

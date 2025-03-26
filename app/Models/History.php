@@ -16,8 +16,8 @@ class History extends Model
 
     protected $fillable = ['game_id', 'user_id', 'fen', 'turn'];
 
-    public function player(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
+    /** BONUS
+     * Implement belongs-to relation with User
+     */
+    public function player() {}
 }

@@ -32,13 +32,6 @@ class ChessController extends Controller
             // STEP 5: Check if the request was successful and return the response
             // if (success) {
 
-                $game_id = $request->game_id;
-                $fen = $request->fen;
-                $turn = $request->turn;
-
-                $this->createHistoryLog($game_id, $fen, $turn);
-
-
             //    return response;
             //}
 
@@ -65,6 +58,7 @@ class ChessController extends Controller
 
     /** BONUS: Implement this function for logging chess moves.
      *  Use the mass assignment method: https://laravel.com/docs/12.x/eloquent#mass-assignment
+     *  Use this method to log your chess moves in the 'move' endpoint above.
      */
     private function createHistoryLog(String $game_id, String $fen, int $turn)
     {
