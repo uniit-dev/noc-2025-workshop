@@ -30,8 +30,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('login'), {
-            onFinish: () => reset('password'),
+        fetch('/sanctum/csrf-cookie', {
+            credentials: 'include',
+        }).then(() => {
+            console.log('CSRF token set');
+            post(route('login'), {
+                onFinish: () => reset('password'),
+            });
         });
     };
 

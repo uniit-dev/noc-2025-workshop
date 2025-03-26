@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import axios from '@/lib/axios';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@headlessui/react';
 import { Head } from '@inertiajs/react';
@@ -15,9 +16,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({ game_id }: { game_id: string }) {
     const chessboardWrapperRef = useRef<HTMLDivElement | null>(null);
     const [game] = useState<Chess>(new Chess());
+    const [turn, setTurn] = useState<number>(0);
     const [fen, setFen] = useState('');
     const [aiMoving, setAiMoving] = useState(false);
     const [lastMoveValid, setLastMoveValid] = useState(true);
@@ -54,10 +56,12 @@ export default function Dashboard() {
 
         setStatus(status);
         setFen(game.fen());
+
+        return game.fen();
     }, [game]);
 
     const aiMove = useCallback(
-        (requestedMove: string) => {
+        async (requestedMove: string) => {
             if (!requestedMove) return false;
 
             const moveSquares = requestedMove.trim().split('-');
@@ -76,42 +80,48 @@ export default function Dashboard() {
                 // illegal move
                 if (move === null) return false;
 
-                updateStatus();
+                const newFen = updateStatus();
+
+                await axios.post('/api/record-move', {
+                    fen: newFen,
+                    color: 'black',
+                    game_id,
+                    turn: turn + 1,
+                });
             } catch (e) {
                 console.error('Failed moving AI piece', e);
                 return false;
             }
             return true;
         },
-        [game, updateStatus],
+        [game, updateStatus, turn],
     );
 
     const handlePost = useCallback(
         async (fen: string) => {
             setAiMoving(true);
             try {
-                const response = await fetch('/api/move', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ fen: fen ?? '', color: 'black' }),
+                const { data } = await axios.post('/api/move', {
+                    fen: fen ?? '',
+                    color: 'black',
+                    game_id,
+                    turn,
                 });
-                const data = await response.json();
 
                 const { requestedMove } = data;
                 console.info('Requested move: ', requestedMove);
 
-                const validMove = aiMove(requestedMove);
+                const validMove = await aiMove(requestedMove);
                 setLastMoveValid(validMove);
                 setAiMoving(false);
+                setTurn((prev) => prev + 2);
             } catch (e) {
                 console.error('Failed moving AI piece', e);
                 setAiMoving(false);
                 setLastMoveValid(false);
             }
         },
-        [aiMove],
+        [aiMove, turn],
     );
 
     const onDrop = (sourceSquare: Square, targetSquare: Square) => {
