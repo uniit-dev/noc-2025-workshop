@@ -51,6 +51,7 @@ Laravel follows an MVC (Model-View-Controller) structure. Below is a breakdown o
 ### 1️⃣ Install Dependencies
 ```sh
 npm install
+composer install
 ```
 
 ### 2️⃣ Configure Environment
@@ -63,6 +64,7 @@ php artisan key:generate
 ### 3️⃣ Setup Database
 Edit the `.env` file to set up database credentials, then run:
 ```sh
+touch database/database.sqlite
 php artisan migrate --seed
 ```
 
