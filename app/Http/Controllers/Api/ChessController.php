@@ -25,7 +25,7 @@ class ChessController extends Controller
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . $apiKey;
         // STEP 3: Setup the data to be sent to the API based on https://ai.google.dev/gemini-api/docs/text-generation
         $prompt = 'Given the FEN string 
-        ' . $request->fen . ' and the color ' . $request->color . ', generate a move. 
+        ' . $request->fen . ' and the color on the move ' . $request->color . ', generate a move. 
         THe move should be in format e4-e5 and return the move only without anything else.';
         
         $data = [
@@ -48,7 +48,7 @@ class ChessController extends Controller
             // STEP 5: Check if the request was successful and return the response
             if ($response->successful()) {
                 $responseData = json_decode($response->body());
-                $move = $responseData['canditates'][0]['content']['parts'][0]['text'];
+                $move = $responseData['candidates'][0]['content']['parts'][0]['text'];
 
                 $payload = [
                     'requestedMove' => $move,
