@@ -20,11 +20,13 @@ class ChessController extends Controller
     public function move(ChessMoveRequest $request)
     {
         // STEP 1: Get the API key from the .env file using config()
-
+        $apiKey = config('app.gemini_api_key');
         // STEP 2: Define the URL to the Gemini API and the prompt to send
-
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . $apiKey;
         // STEP 3: Setup the data to be sent to the API based on https://ai.google.dev/gemini-api/docs/text-generation
-
+        $prompt = 'Given the FEN string 
+        ' . $request->fen . ' and the color ' . $request->color . ', generate a move. 
+        THe move should be in format e4-e5 and return the move only without anything else.';
         try {
             // STEP 4: Send a POST request to the Gemini API Using Illuminate\Support\Facades\Http https://laravel.com/docs/11.x/http-client#headers
 
