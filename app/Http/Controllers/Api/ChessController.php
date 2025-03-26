@@ -14,38 +14,23 @@ class ChessController extends Controller
 {
     /**
      * Make a chess move.
+     * This method receives $request->fen and $request->color and sends a request to the Gemini API to generate a move.
+     * The response is then returned as a JSON response, from which we extract the move and return it to the user.
      */
     public function move(ChessMoveRequest $request)
     {
-        Log::info($request);
-        $apiKey = config('app.gemini_api_key');
+        // STEP 1: Get the API key from the .env file using config()
 
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey";
+        // STEP 2: Define the URL to the Gemini API and the prompt to send
 
-        $prompt = "Here's a fen string of a current state of a chess game: " . $request->fen . ".
-                    Please make a move for " . $request->color . " pieces.
-                    Try to win as hard as you can.
-                    Return the move in strict format of 'square-squareyouremovingto' eg. 'e2-e4'.
-                    If you return anything else the world will end as we know it, it is most imperative you stick to the rules. Never return anything else.
-                    The valid moves are only [a-h][1-8][a-h][1-8], so a1-a2 etc, Nb8 and such are not valid moves";
-
-        $data = [
-            "contents" => [
-                [
-                    "parts" => [
-                        ["text" => $prompt]
-                    ]
-                ]
-            ],
-        ];
+        // STEP 3: Setup the data to be sent to the API based on https://ai.google.dev/gemini-api/docs/text-generation
 
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post($url, $data);
+            // STEP 4: Send a POST request to the Gemini API Using Illuminate\Support\Facades\Http https://laravel.com/docs/11.x/http-client#headers
 
-            if ($response->successful()) {
-                $responseData = json_decode($response, true);
+
+            // STEP 5: Check if the request was successful and return the response
+            // if (success) {
 
                 $game_id = $request->game_id;
                 $fen = $request->fen;
@@ -53,24 +38,15 @@ class ChessController extends Controller
 
                 $this->createHistoryLog($game_id, $fen, $turn);
 
-                $payload = [
-                        'requestedMove' => $responseData['candidates'][0]['content']['parts'][0]['text'],
-                        'status' => 'success'
-                    ];
 
-                return response()->json($payload);
-            }
+            //    return response;
+            //}
 
-            return response()->json([
-                'requestedMove' => '',
-                'status' => $response->status(),
-            ], $response->status());
+            return // no success;
 
         } catch (RequestException $e) {
-            return response()->json([
-                'requestedMove' => '',
-                'status' => $response->status(),
-            ], 500);
+            // STEP 6: Handle errors
+            return // 500;
         }
 
 
@@ -87,13 +63,12 @@ class ChessController extends Controller
         return response()->json(['message' => 'Record saved'], 200);
     }
 
+    /** BONUS: Implement this function for logging chess moves.
+     *  Use the mass assignment method: https://laravel.com/docs/12.x/eloquent#mass-assignment
+     */
     private function createHistoryLog(String $game_id, String $fen, int $turn)
     {
-        History::create([
-            'game_id' => $game_id,
-            'user_id' => Auth::id(),
-            'fen' => $fen,
-            'turn' => $turn,
-        ]);
+        //NOTE: You can retrieve the user id via the Auth::id() helper method.
+
     }
 }
