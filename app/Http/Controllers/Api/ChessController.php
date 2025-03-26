@@ -47,13 +47,11 @@ class ChessController extends Controller
             if ($response->successful()) {
                 $responseData = json_decode($response, true);
 
-                Log::info($responseData);
-                History::create([
-                    'game_id' => $request->game_id,
-                    'user_id' => Auth::id(),
-                    'fen' => $request->fen,
-                    'order' => $request->turn,
-                ]);
+                $game_id = $request->game_id;
+                $fen = $request->fen;
+                $turn = $request->turn;
+
+                $this->createHistoryLog($game_id, $fen, $turn);
 
                 $payload = [
                         'requestedMove' => $responseData['candidates'][0]['content']['parts'][0]['text'],
@@ -80,13 +78,22 @@ class ChessController extends Controller
 
     public function record(ChessMoveRequest $request)
     {
-        History::create([
-            'game_id' => $request->game_id,
-            'user_id' => Auth::id(),
-            'fen' => $request->fen,
-            'order' => $request->turn,
-        ]);
+        $game_id = $request->game_id;
+        $fen = $request->fen;
+        $turn = $request->turn;
 
-        return response()->json(['message' => 'Record saved', 200]);
+        $this->createHistoryLog($game_id, $fen, $turn);
+
+        return response()->json(['message' => 'Record saved'], 200);
+    }
+
+    private function createHistoryLog(String $game_id, String $fen, int $turn)
+    {
+        History::create([
+            'game_id' => $game_id,
+            'user_id' => Auth::id(),
+            'fen' => $fen,
+            'turn' => $turn,
+        ]);
     }
 }

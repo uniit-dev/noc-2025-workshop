@@ -16,9 +16,9 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('fen');
-            $table->integer('order');
+            $table->integer('turn');
 
-            $table->primary(['game_id', 'order']);
+            $table->primary(['game_id', 'turn']);
         });
     }
 

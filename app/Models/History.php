@@ -14,7 +14,7 @@ class History extends Model
      */
     protected $table = 'history';
 
-    protected $fillable = ['game_id', 'user_id', 'fen', 'order'];
+    protected $fillable = ['game_id', 'user_id', 'fen', 'turn'];
 
     public function player(): BelongsTo
     {

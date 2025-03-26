@@ -14,21 +14,22 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type GameHistory = { game_id: string; user_id: string; fen: string; order: number }[];
+type GameHistory = { game_id: string; user_id: string; fen: string; turn: number }[];
 export default function Replay({ replays }: { replays: Record<string, GameHistory> }) {
     console.log(replays);
 
     const chessboardWrapperRef = useRef<HTMLDivElement | null>(null);
-    const gameIds = Object.keys(replays);
-    const [currentGameId, setCurrentGameId] = useState(gameIds[0]);
+    const gameIds = Object.keys(replays) ?? [];
+    const [currentGameId, setCurrentGameId] = useState(gameIds[0] ?? '');
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const currentGame = useMemo(() => replays[currentGameId], [currentGameId]);
+    const currentGame = useMemo(() => replays[currentGameId] ?? [], [currentGameId]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div id="chessboard" ref={chessboardWrapperRef} className="mx-auto w-full max-w-1/2 p-4">
-                <Chessboard position={currentGame[currentIndex].fen} arePiecesDraggable={false} />
+                <Chessboard position={currentGame[currentIndex]?.fen ?? ''} arePiecesDraggable={false} />
             </div>
             <div className="flex justify-center gap-4">
                 <Button disabled={currentIndex === 0} onClick={() => setCurrentIndex(currentIndex - 1)} className="cursor-pointer">
@@ -58,20 +59,20 @@ export default function Replay({ replays }: { replays: Record<string, GameHistor
                 <div>
                     <span className="text-lg">Moves:</span>
                     <ul className="flex gap-5">
-                        {currentGame.map(({ order }) => (
+                        {currentGame.map(({ turn }) => (
                             <li
-                                key={order}
-                                className={`h-8 w-8 cursor-pointer rounded-md border p-1 text-center hover:border-black ${currentIndex === order ? 'bg-gray-200' : ''}`}
-                                onClick={() => setCurrentIndex(order)}
+                                key={turn}
+                                className={`h-8 w-8 cursor-pointer rounded-md border p-1 text-center hover:border-black ${currentIndex === turn ? 'bg-gray-200' : ''}`}
+                                onClick={() => setCurrentIndex(turn)}
                             >
-                                {order + 1}
+                                {turn + 1}
                             </li>
                         ))}
                     </ul>
                 </div>
                 <div>
                     <span className="text-lg">Current Fen</span>
-                    <p>{currentGame[currentIndex].fen}</p>
+                    <p>{currentGame[currentIndex]?.fen}</p>
                 </div>
             </div>
         </AppLayout>
