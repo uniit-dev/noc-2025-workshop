@@ -42,7 +42,8 @@ class ChessController extends Controller
 
         try {
             // STEP 4: Send a POST request to the Gemini API Using Illuminate\Support\Facades\Http https://laravel.com/docs/11.x/http-client#headers
-
+            $response = Http::withHeader('Content-Type', 'application/json')
+                ->post($url, $data);
 
             // STEP 5: Check if the request was successful and return the response
             // if (success) {
