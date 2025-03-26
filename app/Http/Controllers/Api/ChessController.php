@@ -47,7 +47,7 @@ class ChessController extends Controller
 
             // STEP 5: Check if the request was successful and return the response
             if ($response->successful()) {
-                $responseData = json_decode($response->body());
+                $responseData = json_decode($response, true);
                 $move = $responseData['candidates'][0]['content']['parts'][0]['text'];
 
                 $payload = [
